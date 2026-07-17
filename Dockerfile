@@ -1,27 +1,18 @@
-# Maven build container 
+FROM maven:3.9.14-eclipse-temurin-21 AS builder
 
-FROM maven:3.9.14-eclipse-temurin-11 AS maven_build
+WORKDIR /app
 
-COPY pom.xml /tmp/
+COPY pom.xml .
+COPY src ./src
 
-COPY src /tmp/src/
+RUN mvn clean package -DskipTests
 
-WORKDIR /tmp/
+FROM eclipse-temurin:21-jre
 
-RUN mvn package
+WORKDIR /app
 
-#pull base image
+COPY --from=builder /app/target/*.jar app.jar
 
-FROM eclipse-temurin:11
-
-#maintainer 
-MAINTAINER dstar55@yahoo.com
-#expose port 8080
 EXPOSE 8080
 
-#default command
-CMD java -jar /data/hello-world-0.1.0.jar
-
-#copy hello world to docker image from builder image
-
-COPY --from=maven_build /tmp/target/hello-world-0.1.0.jar /data/hello-world-0.1.0.jar
+ENTRYPOINT ["java","-jar","app.jar"]
