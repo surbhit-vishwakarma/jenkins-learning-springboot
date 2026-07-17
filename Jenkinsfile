@@ -1,4 +1,5 @@
 pipeline {
+
     agent any
 
     tools {
@@ -6,25 +7,45 @@ pipeline {
         maven 'Maven3'
     }
 
+    environment {
+        IMAGE_NAME = 'YOUR_DOCKERHUB_USERNAME/hello-world'
+        IMAGE_TAG = '1.0'
+    }
+
     stages {
 
-        stage('Compile') {
+        stage('Build') {
             steps {
-                sh 'mvn clean compile'
+                sh 'mvn clean package'
             }
         }
 
-        stage('Test') {
+        stage('Docker Build') {
             steps {
-                sh 'mvn test'
+                sh 'docker build -t $IMAGE_NAME:$IMAGE_TAG .'
             }
         }
 
-        stage('Package') {
+        stage('Docker Login') {
             steps {
-                sh 'mvn package'
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub-creds',
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASS'
+                    )
+                ]) {
+                    sh '''
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                    '''
+                }
             }
         }
 
+        stage('Docker Push') {
+            steps {
+                sh 'docker push $IMAGE_NAME:$IMAGE_TAG'
+            }
+        }
     }
 }
