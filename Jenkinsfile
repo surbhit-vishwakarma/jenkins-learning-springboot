@@ -8,7 +8,7 @@ pipeline {
     }
 
     environment {
-        IMAGE_NAME = 'YOUR_DOCKERHUB_USERNAME/hello-world'
+        IMAGE_NAME = 'surbhit7/hello-world'
         IMAGE_TAG = '1.0'
     }
 
